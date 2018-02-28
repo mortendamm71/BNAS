@@ -1,0 +1,19 @@
+The lab is running on an ESXI server.
+The following virtual machines (routers) has been installed:
+R0_MD_Csr1000v-172.16.249.10 (Cisco IOS-XE)
+R1_MD_Csr1000v-172.16.249.11 (Cisco IOS-XE)
+R2_MD_Timos-172.16.249.12 (Nokia SR-OS)
+R3_MD_Timos-172.16.249.13 (Nokia SR-OS)
+
+All VM's are connected to vSwitch0 and Physical Adapter towards Network.
+VM's are reachable from management station.
+
+All VM's are connected to vSwitch1.
+Will be used to build network topology.
+
+NMS station is an Ubuntu running on an VirtualBox.
+Installed virtualenv, pip, python, ansible.
+Can SSH to lab routers.
+
+
+
