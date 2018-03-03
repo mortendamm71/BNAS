@@ -1,0 +1,34 @@
+---
+- name: Create output file on localhost
+  hosts: localhost
+  connection: local
+  tasks:
+    - file: path={{inventory_hostname}}_interfaces_report.json state=absent
+    - file: path={{inventory_hostname}}_interfaces_report.json state=touch
+
+- name: Get SNMP facts from ios devices
+  hosts: ios
+  gather_facts: false
+  connection: local
+  tasks:
+  - snmp_facts:
+      host: "{{ansible_host}}"
+      version: v2
+      community: cisco
+    register: result
+  #- debug: var=result.ansible_facts
+  - name: Save printout in a local file
+    local_action: copy content={{result.ansible_facts.ansible_interfaces | to_nice_json}} dest=./{{inventory_hostname}}_interfaces_report.json
+
+
+- name: Get CLI result from Timos devices
+  hosts: timos
+  gather_facts: false
+  connection: local
+  tasks:
+  - sros_command:
+      commands: show router interface
+    register: print_output
+  #- debug: var=print_output.stdout_lines
+  - name: Save printout in a local file
+    local_action: copy content={{print_output.stdout_lines | to_nice_json}} dest=./{{inventory_hostname}}_interfaces_report.json

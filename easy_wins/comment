@@ -1,0 +1,4 @@
+The playbook gather snmp-facts from a Cico router and print interfaces to file.
+As fact modules are not available for SR-OS the CLI are used to gather router interfaces and print result to file.
+Results are formattet to json.
+I have spent som time trying to extract interesting information and make pretty prints, but are somehow stucket of using the playbook in that sense.
