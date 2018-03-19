@@ -1,0 +1,46 @@
+#Network Data model - to be used for transformation
+---
+common:
+  message_digest_key: bnas
+  asn: 1
+
+nodes:
+  - name: R0
+    system: 10.0.0.10
+    area: 999
+    management: 172.16.249.10
+    port: GigabitEthernet1
+    os: ios
+  - name: R1
+    system: 10.0.0.11
+    area: 999
+    management: 172.16.249.11
+    port: GigabitEthernet1
+    os: ios
+  - name: R2
+    system: 10.0.0.12
+    area: 999
+    management: 172.16.249.12
+    port: 1/1/1
+    os: timos
+  - name: R3
+    system: 10.0.0.13
+    area: 999
+    management: 172.16.249.13
+    port: 1/1/1
+    os: timos
+
+fabric:
+  - { left: R0, left_ip: 192.168.200.1, left_port: GigabitEthernet2,
+    right: R2, right_ip: 192.168.200.2, right_port: 1/1/2,
+    dot1q: 100, cost: 1, area: 999 }
+  - { left: R2, left_ip: 192.168.200.5, left_port: 1/1/2,
+    right: R3, right_ip: 192.168.200.6, right_port: 1/1/2,
+    dot1q: 200, cost: 1, area: 999 }
+  - { left: R3, left_ip: 192.168.200.9, left_port: 1/1/2,
+    right: R1, right_ip: 192.168.200.10, right_port: GigabitEthernet2,
+    dot1q: 300, cost: 1, area: 999 }
+
+sfabric:
+  - { left: R2, right: R3, type: L2VPN }
+  - { left: R0, right: R1, type: L3VPN }

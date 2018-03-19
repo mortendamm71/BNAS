@@ -1,0 +1,58 @@
+#
+# Nodes in the network
+#
+#Macro generates description of a single interface
+#
+
+---
+common:
+  message_digest_key: bnas
+  asn: 1
+
+nodes:
+
+  R0:
+    management: 172.16.249.10
+    management_port: GigabitEthernet1
+    system: 10.0.0.10
+    area: 999
+    os: ios
+    links:
+      GigabitEthernet2.100: { ip: 192.168.200.1, remote: R2, cost: 1, dot1q: 100, area: 999 }
+    sbase:
+      - { remote: R1, type: L3VPN }
+
+  R1:
+    management: 172.16.249.11
+    management_port: GigabitEthernet1
+    system: 10.0.0.11
+    area: 999
+    os: ios
+    links:
+      GigabitEthernet2.300: { ip: 192.168.200.10, remote: R3, cost: 1, dot1q: 300, area: 999 }
+    sbase:
+      - { remote: R0, type: L3VPN }
+
+  R2:
+    management: 172.16.249.12
+    management_port: 1/1/1
+    system: 10.0.0.12
+    area: 999
+    os: timos
+    links:
+      1/1/2.100: { ip: 192.168.200.2, remote: R0, cost: 1, dot1q: 100, area: 999 }
+      1/1/2.200: { ip: 192.168.200.5, remote: R3, cost: 1, dot1q: 200, area: 999 }
+    sbase:
+      - { remote: R3, type: L2VPN }
+
+  R3:
+    management: 172.16.249.13
+    management_port: 1/1/1
+    system: 10.0.0.13
+    area: 999
+    os: timos
+    links:
+      1/1/2.200: { ip: 192.168.200.6, remote: R2, cost: 1, dot1q: 200, area: 999 }
+      1/1/2.300: { ip: 192.168.200.9, remote: R1, cost: 1, dot1q: 300, area: 999 }
+    sbase:
+      - { remote: R2, type: L2VPN }

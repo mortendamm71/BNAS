@@ -1,0 +1,19 @@
+---
+common:
+  asn: 1
+
+L2VPN:
+  - { left: R2, left_transport: 10.0.0.12, left_port: 1/1/3, left_tag: 1001,
+    right: R3, right_transport: 10.0.0.13, right_port: 1/1/3, right_tag: 1001,
+    customer_id: 101, service_id: 1000, service_mtu: 1600, name: Goldpartner1 }
+  - { left: R2, left_transport: 10.0.0.12, left_port: 1/1/3, left_tag: 1002,
+    right: R3, right_transport: 10.0.0.13, right_port: 1/1/3, right_tag: 1002,
+    customer_id: 102, service_id: 1001, service_mtu: 1600, name: Goldpartner2 }
+
+L3VPN:
+  - { left: R0, left_transport: 10.0.0.10, left_port: GigabitEthernet3, left_tag: 2001, neighbor_left: 172.16.17.0,
+    right: R1, right_transport: 10.0.0.11, right_port: GigabitEthernet3, right_tag: 2001, neighbor_right: 172.16.17.4,
+    customer_id: 201, service_id: 2000, neighbor_asn: 65535, name: Silverpartner1 }
+  - { left: R0, left_transport: 10.0.0.10, left_port: GigabitEthernet3, left_tag: 2002, neighbor_left: 172.16.17.8,
+    right: R1, right_transport: 10.0.0.11, right_port: GigabitEthernet3, right_tag: 2002, neighbor_right: 172.16.17.12,
+    customer_id: 202, service_id: 2001, neighbor_asn: 65535, name: Silverpartner2 }

@@ -1,0 +1,290 @@
+exit all
+configure
+#--------------------------------------------------
+echo "System Configuration"
+#--------------------------------------------------
+    system
+        name "R3"
+        dns
+        exit
+        snmp
+        exit
+        time
+            sntp
+                shutdown
+            exit
+            zone UTC                  
+        exit
+        thresholds
+            rmon
+            exit
+        exit
+    exit
+#--------------------------------------------------
+echo "System Security Configuration"
+#--------------------------------------------------
+    system
+        security
+            user "admin"
+                password "$2y$10$WnpypNouZ0MkhMFMEAv3Deb4zJH78pyCnR4roKpluXr1YEkaduXLO"
+                access console 
+                console
+                    member "administrative"
+                exit
+            exit
+            user "md"
+                password "$2y$10$stapEzxroiil9Wg7r4iAs.MT2xY3JnYFj9apGRhaNsGlLTfFZuppe"
+                access console ftp snmp li netconf 
+                console               
+                    member "default"
+                    member "administrative"
+                exit
+            exit
+            no per-peer-queuing
+            cpu-protection
+                link-specific-rate max
+                policy 254 create
+                exit
+                policy 255 create
+                exit
+                port-overall-rate 15000 
+            exit
+        exit
+    exit
+#--------------------------------------------------
+echo "Log Configuration"
+#--------------------------------------------------
+    log 
+    exit 
+#--------------------------------------------------
+echo "System Security Cpm Hw Filters and PKI Configuration"
+#--------------------------------------------------
+    system
+        security
+        exit
+    exit
+#--------------------------------------------------
+echo "QoS Policy Configuration"
+#--------------------------------------------------
+    qos
+    exit
+#--------------------------------------------------
+echo "Card Configuration"
+#--------------------------------------------------
+    card 1
+        card-type iom3-xp-b
+        mda 1
+            mda-type m5-1gb-sfp-b
+            no shutdown
+        exit
+        no shutdown
+    exit
+#--------------------------------------------------
+echo "Port Configuration"
+#--------------------------------------------------
+    port 1/1/1
+        ethernet
+        exit
+        no shutdown
+    exit
+    port 1/1/2
+        ethernet
+            encap-type dot1q
+            mtu 1518
+        exit
+        no shutdown
+    exit
+    port 1/1/3
+        description "Customer"
+        ethernet
+            mode access
+            encap-type dot1q
+            mtu 1800
+        exit
+        no shutdown                   
+    exit
+    port 1/1/4
+        shutdown
+        ethernet
+        exit
+    exit
+    port 1/1/5
+        shutdown
+        ethernet
+        exit
+    exit
+#--------------------------------------------------
+echo "System Sync-If-Timing Configuration"
+#--------------------------------------------------
+    system
+        sync-if-timing
+            begin
+            commit
+        exit
+    exit
+#--------------------------------------------------
+echo "Management Router Configuration"
+#--------------------------------------------------
+    router management
+    exit
+
+#--------------------------------------------------
+echo "Router (Network Side) Configuration"
+#--------------------------------------------------
+    router 
+        interface "management"
+            address 172.16.249.13/24
+            port 1/1/1
+            no shutdown
+        exit
+        interface "system"
+            address 10.0.0.13/32
+            no shutdown
+        exit
+        interface "to-R1"
+            address 192.168.200.9/30
+            port 1/1/2:300
+            no shutdown
+        exit                          
+        interface "to-R2"
+            address 192.168.200.6/30
+            port 1/1/2:200
+            no shutdown
+        exit
+#--------------------------------------------------
+echo "Static Route Configuration"
+#--------------------------------------------------
+        static-route 0.0.0.0/0 next-hop 172.16.249.1
+        static-route 217.13.4.18/32 next-hop 172.16.249.1
+#--------------------------------------------------
+echo "OSPFv2 Configuration"
+#--------------------------------------------------
+        ospf
+            area 0.0.3.231
+                interface "system"
+                    no shutdown
+                exit
+                interface "to-R1"
+                    interface-type point-to-point
+                    authentication-type message-digest
+                    message-digest-key 1 md5 "tOH1Iy/XemqNkB/qJbBpkyBflbRJ9FlB2QRIrY7deAk" hash2
+                    no shutdown
+                exit
+                interface "to-R2"
+                    interface-type point-to-point
+                    authentication-type message-digest
+                    message-digest-key 1 md5 "tOH1Iy/XemqNkB/qJbBpkqKVFEdoJQBQIz5R/iJUbEI" hash2
+                    no shutdown
+                exit
+            exit
+        exit
+#--------------------------------------------------
+echo "MPLS Configuration"
+#--------------------------------------------------
+        mpls
+            shutdown
+            interface "system"
+                no shutdown
+            exit
+            interface "to-R1"
+                no shutdown
+            exit
+            interface "to-R2"         
+                no shutdown
+            exit
+        exit
+#--------------------------------------------------
+echo "RSVP Configuration"
+#--------------------------------------------------
+        rsvp
+            shutdown
+            interface "system"
+                no shutdown
+            exit
+            interface "to-R1"
+                no shutdown
+            exit
+            interface "to-R2"
+                no shutdown
+            exit
+        exit
+#--------------------------------------------------
+echo "MPLS LSP Configuration"
+#--------------------------------------------------
+        mpls                          
+        exit
+#--------------------------------------------------
+echo "LDP Configuration"
+#--------------------------------------------------
+        ldp
+            interface-parameters
+                interface "to-R1"
+                exit
+                interface "to-R2"
+                exit
+            exit
+            targeted-session
+            exit
+            no shutdown
+        exit
+    exit
+
+#--------------------------------------------------
+echo "Service Configuration"
+#--------------------------------------------------
+    service
+        sdp 12 mpls create            
+            description "LDP to R2"
+            far-end 10.0.0.12
+            ldp
+            path-mtu 1600
+            keep-alive
+                no shutdown
+            exit
+            no shutdown
+        exit
+        customer 1 create
+            description "Default customer"
+        exit
+        customer 2 create
+        exit
+        epipe 1000 customer 1 create
+            description "Customer 1B"
+            service-mtu 1600
+            sap 1/1/3:1 create
+            exit
+            spoke-sdp 12:1000 create
+                no shutdown
+            exit                      
+            no shutdown
+        exit
+        vpls 2000 customer 2 create
+            description "Customer 2B"
+            service-mtu 1600
+            stp
+                shutdown
+            exit
+            sap 1/1/3:2 create
+            exit
+            spoke-sdp 12:2000 create
+                no shutdown
+            exit
+            no shutdown
+        exit
+    exit
+#--------------------------------------------------
+echo "Router (Service Side) Configuration"
+#--------------------------------------------------
+    router 
+#--------------------------------------------------
+echo "OSPFv2 Configuration"           
+#--------------------------------------------------
+        ospf
+        exit
+#--------------------------------------------------
+echo "WLAN Gateway Configuration"
+#--------------------------------------------------
+    exit
+
+
+exit all

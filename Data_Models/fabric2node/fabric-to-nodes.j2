@@ -1,0 +1,39 @@
+#
+# Nodes in the network
+#
+#Macro generates description of a single interface
+{% macro internal_link(port,ip,cost,dot1q,area,remote) %}
+{{ port }}.{{dot1q}}: { ip: {{ip}}, remote: {{remote}}, cost: {{cost}}, dot1q: {{dot1q}}, area: {{area}} }{% endmacro %}
+#
+
+---
+common:
+  message_digest_key: {{common.message_digest_key}}
+  asn: {{common.asn}}
+
+nodes:
+{% for node in nodes %}
+
+  {{ node.name }}:
+    management: {{ node.management }}
+    management_port: {{ node.port }}
+    system: {{ node.system }}
+    area: {{ node.area }}
+    os: {{ node.os }}
+    links:
+{%   for link in fabric %}
+{%     if link.left == node.name %}
+      {{ internal_link(link.left_port,link.left_ip,link.cost,link.dot1q,link.area,link.right) }}
+{%     elif link.right == node.name %}
+      {{ internal_link(link.right_port,link.right_ip, link.cost,link.dot1q,link.area,link.left) }}
+{%     endif %}
+{%   endfor %}
+    sbase:
+{%   for destination in sfabric %}
+{%     if destination.left == node.name %}
+      - { remote: {{ destination.right }}, type: {{destination.type }} }
+{%     elif destination.right == node.name %}
+      - { remote: {{ destination.left }}, type: {{ destination.type }} }
+{%     endif %}
+{%   endfor %}
+{% endfor %}

@@ -1,0 +1,14 @@
+#--------------------------------------------------
+echo "System Security Configuration"
+#--------------------------------------------------
+    system
+        snmp
+        exit
+        contact {{snmp_contact}}
+        location {{location}}
+        security
+            snmp
+                community "{{snmp_community}}" rw version v2c
+            exit
+        exit
+    exit

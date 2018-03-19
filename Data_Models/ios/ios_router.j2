@@ -1,0 +1,24 @@
+{% set node = nodes[inventory_hostname] %}
+ip vrf management
+ rd 1:1
+!
+router ospf 1
+{% if node.system is defined %}
+ router-id {{ node.system }}
+{% endif %}
+{% if node.links is defined %}
+{%  for intf,data in node.links|dictsort %}
+ area {{ data.area }} authentication message-digest
+ network {{ node.system }} 0.0.0.0 area {{ node.area }}
+{% set network = data.ip | ipsubnet(30) | ipaddr('network') %}
+ network {{ network }} 0.0.0.3 area {{ data.area }}
+!
+{%  endfor %}
+{% endif %}
+{% if node.management is defined %}
+{% set gw = node.management | ipsubnet(24) | ipaddr('1') | ipaddr('address')%}
+ip route vrf management 0.0.0.0 0.0.0.0 {{ gw }}
+!
+{% endif %}
+mpls ldp router-id Loopback0
+!

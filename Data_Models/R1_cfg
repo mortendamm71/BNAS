@@ -1,0 +1,234 @@
+version 16.7
+service timestamps debug datetime msec
+service timestamps log datetime msec
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+platform console virtual
+!
+hostname R1
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$ZMgV$IqWIWQLGKJvHPZh/VdMXa0
+!
+no aaa new-model
+!
+ip vrf 3000
+ description customer 3
+ rd 10.0.0.11:3000
+ route-target export 3:3
+ route-target import 3:3
+!
+ip vrf management
+ rd 1:1
+!
+!
+!
+!
+!
+!
+!
+ip domain name lab.net
+!
+!
+!
+!
+!
+!
+!
+!
+!         
+!
+subscriber templating
+! 
+! 
+! 
+! 
+!
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+crypto pki trustpoint TP-self-signed-4252380621
+ enrollment selfsigned
+ subject-name cn=IOS-Self-Signed-Certificate-4252380621
+ revocation-check none
+ rsakeypair TP-self-signed-4252380621
+!
+!
+crypto pki certificate chain TP-self-signed-4252380621
+ certificate self-signed 01
+  30820330 30820218 A0030201 02020101 300D0609 2A864886 F70D0101 05050030 
+  31312F30 2D060355 04031326 494F532D 53656C66 2D536967 6E65642D 43657274 
+  69666963 6174652D 34323532 33383036 3231301E 170D3138 30323133 31303232 
+  35375A17 0D323030 31303130 30303030 305A3031 312F302D 06035504 03132649 
+  4F532D53 656C662D 5369676E 65642D43 65727469 66696361 74652D34 32353233 
+  38303632 31308201 22300D06 092A8648 86F70D01 01010500 0382010F 00308201 
+  0A028201 0100B61D 8A33811B 9B14866E 121DE8F0 35CF3D8B 77578475 59E3079F 
+  BEC6E34F BF9DD7FB F8347046 3787BEF0 E86AFAC2 4DE22005 7CB19151 8DD30CC0 
+  AB552CC3 D71F6E31 9A2D009B F17B0465 F51009D6 9CF7BA32 A85CB353 2C6404A4 
+  94695BD8 65FB5407 55737F57 F0E69A5C 2E643054 06E86419 EEAB18C9 5766AA62 
+  4D168801 AE639CFE 7F7F7DC4 CCA371C6 6283B794 6D2904E7 194FA4D8 0F580D93 
+  DFA0AAB0 29DFA6CE 58D78BB9 A4B00983 A8000946 26DF540F CA1F751E 773A63F5 
+  27BF50DA CCC16EE2 458589B0 F1853FAF 42C78961 9760D913 CC0B25C1 0780DE94 
+  4EA6345D 937B3BF5 683B6D48 30280550 374024E6 ABE4ED13 3F437DCF A2F8C851 
+  2D51FA6E F5550203 010001A3 53305130 0F060355 1D130101 FF040530 030101FF 
+  301F0603 551D2304 18301680 143082ED C2DA910C F7E6F9BD C0A39C98 C16E774B 
+  ED301D06 03551D0E 04160414 3082EDC2 DA910CF7 E6F9BDC0 A39C98C1 6E774BED 
+  300D0609 2A864886 F70D0101 05050003 82010100 2CEDC7ED 29EDCC68 CFDA3955 
+  00296836 A8492D3B B79B449C 00F1D7C3 F48B1C73 43A9B8DE 3B834F61 AFB1DC6F 
+  108EE8FD 747E21E2 63B0E2E7 B0247727 C59BFA49 6FEB055F 1C031689 0B4DA648 
+  10BA77D7 E9AAA78D 39CB3E31 DF9A690E 2DCAA23B BDEEB08E FD3DC4CE 003E6615 
+  B39916EF 22ACCCEA 959DD513 062EE698 16437D43 05B8C02D 775459B0 4D636208 
+  F0B3F8CA BFA10E75 59B55782 5CB85A0E A7C75BF0 F5D7A68D B89B40CC B8E2C60A 
+  799DDA40 42CD5EBA 22FA786C AB64803B AE9F96F2 78E2EFA0 C6D9134E 1904682D 
+  930F00B5 4BA45999 49D9908B CACB572A 9F0EBF24 07CD3BB5 9C287B0E 3B29696E 
+  2E40097B A9527C0D 729A6F99 66662A84 BFF3F2B9
+        quit
+!
+!
+!
+!
+!
+!
+!
+!
+!
+license udi pid CSR1000V sn 9HRZKRRFSX0
+no license smart enable
+diagnostic bootup level minimal
+!
+spanning-tree extend system-id
+!
+!
+!
+username md privilege 15 password 0 Heiabrann1
+!
+redundancy
+!
+!
+!
+!
+!
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+! 
+!         
+!
+!
+interface Loopback0
+ ip address 10.0.0.11 255.255.255.255
+!
+interface Loopback3
+ description Customer 3B
+ ip vrf forwarding 3000
+ ip address 3.3.3.11 255.255.255.255
+!
+interface GigabitEthernet1
+ ip vrf forwarding management
+ ip address 172.16.249.11 255.255.255.0
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!
+interface GigabitEthernet2
+ no ip address
+ negotiation auto
+ no mop enabled
+ no mop sysid
+!         
+interface GigabitEthernet2.300
+ description "to-R3"
+ encapsulation dot1Q 300
+ ip address 192.168.200.10 255.255.255.252
+ ip ospf message-digest-key 1 md5 test
+ ip ospf network point-to-point
+ mpls ip
+!
+router ospf 1
+ area 999 authentication message-digest
+ network 10.0.0.11 0.0.0.0 area 999
+ network 192.168.200.8 0.0.0.3 area 999
+!
+router bgp 1
+ bgp log-neighbor-changes
+ neighbor 10.0.0.10 remote-as 1
+ neighbor 10.0.0.10 update-source Loopback0
+ !
+ address-family vpnv4
+  neighbor 10.0.0.10 activate
+  neighbor 10.0.0.10 send-community both
+ exit-address-family
+ !        
+ address-family ipv4 vrf 3000
+  redistribute connected
+ exit-address-family
+!
+ip forward-protocol nd
+ip http server
+ip http authentication local
+ip http secure-server
+ip tftp source-interface Loopback0
+ip route vrf management 0.0.0.0 0.0.0.0 172.16.249.1
+!
+ip ssh version 2
+!
+!
+ip access-list standard OFFICE
+ permit 217.13.4.197
+ permit 217.13.4.18
+ permit 217.13.1.24
+ deny   any log
+logging host 172.16.249.254
+!
+!
+mpls ldp router-id Loopback0
+snmp-server community cisco RO
+!
+!
+control-plane
+!
+!
+!
+!
+!
+!
+line con 0
+ stopbits 1
+line vty 0 4
+ access-class OFFICE in vrf-also
+ login local
+ transport input ssh
+line vty 5 15
+ access-class OFFICE in vrf-also
+ login local
+ transport input ssh
+!
+wsma agent exec
+!         
+wsma agent config
+!
+wsma agent filesys
+!
+wsma agent notify
+!
+!
+end
