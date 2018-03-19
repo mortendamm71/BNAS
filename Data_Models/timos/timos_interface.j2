@@ -11,9 +11,9 @@ echo "Port Configuration"
     exit
 {% endif %}
 {% if node.links is defined %}
-{%  for intf,data in node.links|dictsort %}
-{% set realport = intf | regex_replace('\.\d*','') %}
-{%    if loop.index <= 1 %}
+{%    for intf,data in node.links|dictsort %}
+{%        set realport = intf | regex_replace('\.\d*','') %}
+{%        if loop.index <= 1 %}
     port {{ realport }}
         description "Infrastructure"
         ethernet
@@ -22,8 +22,8 @@ echo "Port Configuration"
         exit
         no shutdown
     exit
-{%    endif %}
-{%  endfor %}
+{%        endif %}
+{%    endfor %}
 {% endif %}
 #--------------------------------------------------
 echo "Router (Network Side) Configuration"
@@ -43,12 +43,12 @@ echo "Router (Network Side) Configuration"
         exit
 {% endif %}
 {% if node.links is defined %}
-{%  for intf,data in node.links|dictsort %}
-{% set port = intf | regex_replace('\.\d*','') %}
+{%    for intf,data in node.links|dictsort %}
+{%        set port = intf | regex_replace('\.\d*','') %}
       interface "To-{{ data.remote }}"
           address {{ data.ip }}/30
           port {{ port }}:{{ data.dot1q }}
           no shutdown
       exit
-{%  endfor %}
+{%    endfor %}
 {% endif %}

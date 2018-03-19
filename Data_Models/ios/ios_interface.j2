@@ -13,8 +13,8 @@ interface {{ node.management_port }}
 !
 {% endif %}
 {% if node.links is defined %}
-{%  for intf,data in node.links|dictsort %}
-{% set mainintf = intf | regex_replace('\.\d*','') %}
+{%    for intf,data in node.links|dictsort %}
+{%        set mainintf = intf | regex_replace('\.\d*','') %}
 interface {{ mainintf }}
  no ip address
  negotiation auto
@@ -25,10 +25,10 @@ interface {{ intf }}
  ip address {{ data.ip }} 255.255.255.252
  ip ospf message-digest-key 1 {{ common.message_digest_key }}
  ip ospf network point-to-point
-{%     if data.cost is defined %}
+{%        if data.cost is defined %}
  ip ospf cost {{data.cost}}
-{%     endif %}
+{%        endif %}
  mpls ip
 !
-{%  endfor %}
+{%    endfor %}
 {% endif %}

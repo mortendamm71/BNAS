@@ -3,7 +3,7 @@ router bgp {{ common.asn }}
  bgp log-neighbor-changes
 {%  for farend in node.sbase %}
 {%     if farend.type == 'L3VPN' %}
-{%      set node = nodes[farend.remote] %}
+{%     set node = nodes[farend.remote] %}
  neighbor {{ node.system }} remote-as {{ common.asn }}
  neighbor {{ node.system }} update-source Loopback0
  !
@@ -11,6 +11,7 @@ router bgp {{ common.asn }}
   neighbor {{ node.system }} activate
   neighbor {{ node.system }} send-community both
  exit-address-family
+ !
 !
 {%     endif %}
 {%  endfor %}

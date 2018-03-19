@@ -4,7 +4,7 @@ echo "Router (Network Side) Configuration"
 #--------------------------------------------------
     router
 {% if node.management is defined %}
-{% set gw = node.management | ipsubnet(24) | ipaddr('1') | ipaddr('address')%}
+{%    set gw = node.management | ipsubnet(24) | ipaddr('1') | ipaddr('address')%}
 #--------------------------------------------------
 echo "Static Route Configuration"
 #--------------------------------------------------
@@ -15,25 +15,25 @@ echo "OSPFv2 Configuration"
 #--------------------------------------------------
       ospf
 {% if node.system is defined %}
-{% set quad = node.area | ipv4 %}
+{%    set quad = node.area | ipv4 %}
           area {{ quad }}
               interface "system"
                   no shutdown
               exit
-{% set lastquad = quad %}
+{%    set lastquad = quad %}
 {% endif %}
 {% for intf,data in node.links|dictsort %}
-{% set quad = data.area | ipv4 %}
-{%  if quad != lastquad  %}
+{%    set quad = data.area | ipv4 %}
+{%    if quad != lastquad  %}
           area {{ quad }}
-{%  endif %}
+{%    endif %}
               interface "To-{{ data.remote }}""
                   interface-type point-to-point
                   authentication-type message-digest
                   message-digest-key 1 md5 "{{ common.message_digest_key }}"
                   no shutdown
               exit
-{% set lastquad = quad %}
+{%   set lastquad = quad %}
 {% endfor %}
           exit
       exit
