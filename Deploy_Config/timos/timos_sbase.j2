@@ -1,0 +1,23 @@
+{% set node = nodes[inventory_hostname] %}
+#--------------------------------------------------
+echo "Service Configuration"
+#--------------------------------------------------
+    service
+{%  for farend in node.sbase %}
+{%     if farend.type == 'L2VPN' %}
+{%        set remhost = farend.remote %}
+{%        set node = nodes[farend.remote] %}
+{%        set sdpnr = node.system | regex_replace('\d*\.\d*\.\d*\.','10') %}
+        sdp {{ sdpnr }} mpls create
+            description "LDP to {{ remhost }}"
+            far-end {{ node.system }}
+            ldp
+            path-mtu 1600
+            keep-alive
+                no shutdown
+            exit
+            no shutdown
+        exit  
+{%     endif %}
+{%  endfor %}
+    exit

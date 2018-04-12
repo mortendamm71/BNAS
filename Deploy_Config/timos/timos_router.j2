@@ -1,0 +1,69 @@
+{% set node = nodes[inventory_hostname] %}
+#--------------------------------------------------
+echo "Router (Network Side) Configuration"
+#--------------------------------------------------
+    router
+{% if node.management is defined %}
+{%    set gw = node.management | ipsubnet(24) | ipaddr('1') | ipaddr('address')%}
+#--------------------------------------------------
+echo "Static Route Configuration"
+#--------------------------------------------------
+      static-route 0.0.0.0/0 next-hop {{ gw }}
+{% endif %}
+#--------------------------------------------------
+echo "OSPFv2 Configuration"
+#--------------------------------------------------
+      ospf
+{% if node.system is defined %}
+{%    set quad = node.area | ipv4 %}
+          area {{ quad }}
+              interface "system"
+                  no shutdown
+              exit
+{%    set lastquad = quad %}
+{% endif %}
+{% for intf,data in node.links|dictsort %}
+{%    set quad = data.area | ipv4 %}
+{%    if quad != lastquad  %}
+          area {{ quad }}
+{%    endif %}
+              interface "To-{{ data.remote }}""
+                  interface-type point-to-point
+                  authentication-type message-digest
+                  message-digest-key 1 md5 "{{ common.message_digest_key }}"
+                  no shutdown
+              exit
+{%   set lastquad = quad %}
+{% endfor %}
+          exit
+      exit
+#--------------------------------------------------
+echo "MPLS Configuration"
+#--------------------------------------------------
+      mpls
+{% if node.system is defined %}
+          interface "system"
+              no shutdown
+          exit
+{% endif %}
+{% for intf,data in node.links|dictsort %}
+          interface "To-{{ data.remote }}"
+              no shutdown
+          exit
+{% endfor %}
+      exit
+#--------------------------------------------------
+echo "LDP Configuration"
+#--------------------------------------------------
+      ldp
+          interface-parameters
+{% for intf,data in node.links|dictsort %}
+              interface "To-{{ data.remote }}"
+              exit
+{% endfor %}
+          exit
+          targeted-session
+          exit
+          no shutdown
+      exit
+  exit

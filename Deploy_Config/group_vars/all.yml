@@ -1,0 +1,6 @@
+---
+ansible_user: cisco
+ansible_ssh_pass: cisco
+snmp_community: test
+snmp_contact: admin@lab.local
+snmp_host: 172.16.249.254

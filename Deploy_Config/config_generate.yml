@@ -1,0 +1,76 @@
+---
+- name: Transform fabric data model
+  tags:
+    - config-ios
+    - config-timos
+  hosts: localhost
+  gather_facts: no
+  tasks:
+  - include_vars:
+      file: ./fabric2node/fabric.yml
+  - name: Create per-node data model from fabric data model
+    template: src=./fabric2node/fabric-to-nodes.j2 dest=./fabric2node/nodes.yml
+
+- name: Generate base configs for IOS
+  tags:
+    - config-ios
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+        file: ./fabric2node/nodes.yml
+  - name: Create interface config snippet for IOS
+    template: src=./ios/ios_interface.j2 dest=./configs/{{inventory_hostname}}.interface.cfg
+  - name: Create router config snippet for IOS
+    template: src=./ios/ios_router.j2 dest=./configs/{{inventory_hostname}}.router.cfg
+  - name: Create L3 service base snippet for IOS
+    template: src=./ios/ios_sbase.j2 dest=./configs/{{inventory_hostname}}.sbase.cfg
+  - name: Create SNMP config snippet for IOS
+    template: src=./ios/ios_snmp.j2 dest=./configs/{{inventory_hostname}}.snmp.cfg
+  - name: Build General config snippet for IOS
+    template: src=./ios/ios_general.j2 dest=./configs/{{inventory_hostname}}.general.cfg
+
+- name: Generate base configs for TIMOS
+  tags:
+    - config-timos
+  hosts: timos
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+        file: ./fabric2node/nodes.yml
+  - name: Create interface config snippet for Timos
+    template: src=./timos/timos_interface.j2 dest=./configs/{{inventory_hostname}}.interface.cfg
+  - name: Create router config snippet for Timos
+    template: src=./timos/timos_router.j2 dest=./configs/{{inventory_hostname}}.router.cfg
+  - name: Create L2 service base snippet for Timos
+    template: src=./timos/timos_sbase.j2 dest=./configs/{{inventory_hostname}}.sbase.cfg
+  - name: Create SNMP config snippet for Timos
+    template: src=./timos/timos_snmp.j2 dest=./configs/{{inventory_hostname}}.snmp.cfg
+  - name: Build General config snippet for Timos
+    template: src=./timos/timos_general.j2 dest=./configs/{{inventory_hostname}}.general.cfg
+
+- name: Generate service configs for IOS
+  tags:
+    - config-ios
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+         file: ./services/services.yml
+  - name: Create services from service data model
+    template: src=./ios/ios_services.j2 dest=./configs/{{inventory_hostname}}.services.cfg
+
+- name: Generate service configs for TIMOS
+  tags:
+    - config-timos
+  hosts: timos
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+         file: ./services/services.yml
+  - name: Create services from service data model
+    template: src=./timos/timos_services.j2 dest=./configs/{{inventory_hostname}}.services.cfg

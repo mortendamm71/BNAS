@@ -1,0 +1,46 @@
+{% set node = inventory_hostname %}
+{% macro service_config(sid,asn,cid,name,transport,port,tag,nasn,ip1,ip2) %}
+###
+ip vrf {{ sid }}
+ vpn id {{ asn }}:{{ cid }}
+ description Customer {{ name }}
+ rd {{ transport }}:{{ sid }}
+ route-target both {{ sid }}:{{ sid }}
+ !
+!
+interface {{ port }}
+ no ip address
+ negotiation auto
+!
+interface {{ port }}.{{ tag }}
+ description Customer {{ name }}
+ encapsulation dot1Q {{ tag }}
+ ip vrf forwarding {{ sid }}
+ ip address {{ ip1 }} 255.255.255.252
+ !
+!
+router bgp {{ asn }}
+ address-family ipv4 unicast vrf {{ sid }}
+  redistribute connected
+  neighbor {{ ip2 }} remote-as {{ nasn }}
+  neighbor {{ ip2 }} activate
+  exit-address-family
+  !
+ !
+!
+###
+{% endmacro %}
+
+
+{%  for value in L3VPN %}
+{%     if value.left == node %}
+{%        set ipi = value.neighbor_left | ipsubnet(30) | ipaddr('1') | ipaddr('address')%}
+{%        set ipn = value.neighbor_left | ipsubnet(30) | ipaddr('2') | ipaddr('address')%}
+{{        service_config(value.service_id,common.asn,value.customer_id,value.name,value.left_transport,value.left_port,value.left_tag,value.neighbor_asn,ipi,ipn) }}
+{%     endif %}
+{%     if value.right == node %}
+{%        set ipi = value.neighbor_right | ipsubnet(30) | ipaddr('1') | ipaddr('address')%}
+{%        set ipn = value.neighbor_right | ipsubnet(30) | ipaddr('2') | ipaddr('address')%}
+{{        service_config(value.service_id,common.asn,value.customer_id,value.name,value.right_transport,value.right_port,value.right_tag,value.neighbor_asn,ipi,ipn) }}
+{%     endif %}
+{%  endfor %}
