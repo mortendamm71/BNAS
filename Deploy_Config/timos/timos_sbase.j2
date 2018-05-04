@@ -1,4 +1,6 @@
 {% set node = nodes[inventory_hostname] %}
+exit all
+configure
 #--------------------------------------------------
 echo "Service Configuration"
 #--------------------------------------------------
@@ -17,7 +19,7 @@ echo "Service Configuration"
                 no shutdown
             exit
             no shutdown
-        exit  
+        exit
 {%     endif %}
 {%  endfor %}
     exit

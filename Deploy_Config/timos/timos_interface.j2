@@ -1,5 +1,7 @@
 {% set node = nodes[inventory_hostname] %}
 {% if node.management_port is defined %}
+exit all
+configure
 #--------------------------------------------------
 echo "Port Configuration"
 #--------------------------------------------------

@@ -1,0 +1,18 @@
+{% set node = inventory_hostname %}
+---
+prov_vrf:
+{% macro vrf_tag(stag) %}
+  - {{ stag }}
+{% endmacro %}
+{%  for value in L3VPN %}
+{%     if value.left == node and value.state == 'alive' %}
+{%        set tag = value.left_tag%}
+{{        vrf_tag(tag) }}
+{%     endif %}
+{%  endfor %}
+{%  for value in L3VPN %}
+{%     if value.right == node and value.state == 'alive' %}
+{%        set tag = value.right_tag%}
+{{        vrf_tag(tag) }}
+{%     endif %}
+{%  endfor %}

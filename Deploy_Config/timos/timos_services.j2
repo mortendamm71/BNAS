@@ -1,6 +1,8 @@
 {% set node = inventory_hostname %}
 {% macro service_config(port,cid,sid,name,mtu,tag,transport,sdpid) %}
 ###
+exit all
+configure
 #--------------------------------------------------
 echo "Port Configuration"
 #--------------------------------------------------

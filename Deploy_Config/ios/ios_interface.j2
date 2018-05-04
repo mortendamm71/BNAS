@@ -23,7 +23,7 @@ interface {{ intf }}
  description "To-{{ data.remote }}"
  encapsulation dot1Q {{ data.dot1q }}
  ip address {{ data.ip }} 255.255.255.252
- ip ospf message-digest-key 1 {{ common.message_digest_key }}
+ ip ospf message-digest-key 1 md5 {{ common.message_digest_key }}
  ip ospf network point-to-point
 {%        if data.cost is defined %}
  ip ospf cost {{data.cost}}

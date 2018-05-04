@@ -1,11 +1,11 @@
 {% set node = inventory_hostname %}
 {% macro service_config(sid,asn,cid,name,transport,port,tag,nasn,ip1,ip2) %}
-###
 ip vrf {{ sid }}
- vpn id {{ asn }}:{{ cid }}
  description Customer {{ name }}
  rd {{ transport }}:{{ sid }}
- route-target both {{ sid }}:{{ sid }}
+ vpn id {{ asn }}:{{ cid }}
+ route-target export {{ sid }}:{{ sid }}
+ route-target import {{ sid }}:{{ sid }}
  !
 !
 interface {{ port }}
@@ -20,7 +20,7 @@ interface {{ port }}.{{ tag }}
  !
 !
 router bgp {{ asn }}
- address-family ipv4 unicast vrf {{ sid }}
+ address-family ipv4 vrf {{ sid }}
   redistribute connected
   neighbor {{ ip2 }} remote-as {{ nasn }}
   neighbor {{ ip2 }} activate
@@ -28,19 +28,32 @@ router bgp {{ asn }}
   !
  !
 !
-###
 {% endmacro %}
 
 
 {%  for value in L3VPN %}
-{%     if value.left == node %}
+{%     if value.left == node and value.state == 'alive' %}
 {%        set ipi = value.neighbor_left | ipsubnet(30) | ipaddr('1') | ipaddr('address')%}
 {%        set ipn = value.neighbor_left | ipsubnet(30) | ipaddr('2') | ipaddr('address')%}
 {{        service_config(value.service_id,common.asn,value.customer_id,value.name,value.left_transport,value.left_port,value.left_tag,value.neighbor_asn,ipi,ipn) }}
 {%     endif %}
-{%     if value.right == node %}
+{%     if value.right == node and value.state == 'alive' %}
 {%        set ipi = value.neighbor_right | ipsubnet(30) | ipaddr('1') | ipaddr('address')%}
 {%        set ipn = value.neighbor_right | ipsubnet(30) | ipaddr('2') | ipaddr('address')%}
 {{        service_config(value.service_id,common.asn,value.customer_id,value.name,value.right_transport,value.right_port,value.right_tag,value.neighbor_asn,ipi,ipn) }}
+{%     endif %}
+{%  endfor %}
+{%  for value in L3VPN %}
+{%     if value.left == node and value.state == 'absent' %}
+no ip vrf {{ value.service_id }}
+interface {{ value.left_port }}.{{ value.left_tag }}
+ shutdown
+ description Customer state absent
+{%     endif %}
+{%     if value.right == node and value.state == 'absent' %}
+no ip vrf {{ value.service_id }}
+interface {{ value.left_port }}.{{ value.left_tag }}
+ shutdown
+ description Customer state absent
 {%     endif %}
 {%  endfor %}

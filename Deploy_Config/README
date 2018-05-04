@@ -1,0 +1,46 @@
+####Description of playbook####
+
+##Create config environment##
+Empty and create folders for configs and service validiation
+
+##Transform fabric data model##
+Transform fabric data to per node data
+
+##Generate infrastructure configs for IOS##
+Generate config snippets from per node data
+
+##Assemble infrastructure config for IOS##
+Put together all config snippets from previous run.
+
+##Generate service configs for IOS##
+generate service configs from service data model
+
+##Generate pre deploy service check for IOS##
+Napalm Validate config to check if VPNV4 neighbor is up
+
+##Generate post deploy service check for IOS cleanup##
+List of service VRF's that should be active on the target, used for check an Cleanup
+
+##Generate service validiation for IOS##
+Napalm Validate config to check interfaces and IP
+
+##Deploy infrastructure configuration##
+Deploy of infrastructure using NAPALM
+
+##Test infrastructure##
+Test infrastructure using Napalm Validation and previously generated config
+
+##Check services before deployment##
+Check that Customer facing interfaces are not present on the target. Stops if any
+
+##Deploy service configuration##
+Deploy of services using NAPALM
+
+##Test services after deployment##
+Test services using Napalm Validation and previously generated config
+
+##Report service discrepancies##
+Check if not supposed service VRF's are active on the target. Create report as ynl file to be used for Cleanup
+
+##Cleanup VRF services##
+Cleanup based on config generated in previous step

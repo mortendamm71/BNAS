@@ -1,0 +1,15 @@
+---
+- get_facts:
+    hostname: R0
+
+- get_interfaces_ip:
+    GigabitEthernet3.2001:
+      ipv4:
+        172.16.17.1:
+          prefix_length: 30
+
+    GigabitEthernet3.2002:
+      ipv4:
+        172.16.17.9:
+          prefix_length: 30
+

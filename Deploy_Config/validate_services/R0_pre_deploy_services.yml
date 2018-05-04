@@ -1,0 +1,6 @@
+---
+prov_interfaces:
+  - GigabitEthernet3.2001
+
+  - GigabitEthernet3.2002
+

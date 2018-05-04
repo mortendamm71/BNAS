@@ -1,0 +1,20 @@
+{% set node = inventory_hostname %}
+---
+prov_interfaces:
+{% macro interface_config(interf,stag) %}
+  - {{ interf }}.{{ stag }}
+{% endmacro %}
+{%  for value in L3VPN %}
+{%     if value.left == node and value.state == 'alive' %}
+{%        set int = value.left_port%}
+{%        set tag = value.left_tag%}
+{{        interface_config(int,tag) }}
+{%     endif %}
+{%  endfor %}
+{%  for value in L3VPN %}
+{%     if value.right == node and value.state == 'alive' %}
+{%        set int = value.right_port%}
+{%        set tag = value.right_tag%}
+{{        interface_config(int,tag) }}
+{%     endif %}
+{%  endfor %}

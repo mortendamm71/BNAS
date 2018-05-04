@@ -1,0 +1,298 @@
+---
+- name: Create config environment
+  tags:
+    - config
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Assign tmp folder to hosts infrastructure
+      set_fact:
+        host_tmpdir: "./configs/{{inventory_hostname}}"
+      changed_when: no
+      check_mode: no
+    - name: Empty tmp from previous run
+      file:
+        path: "{{host_tmpdir}}"
+        state: absent
+      changed_when: no
+      check_mode: no
+    - name: Create folder to store infrastructure configs
+      file:
+        path: "{{host_tmpdir}}"
+        state: directory
+      changed_when: no
+      check_mode: no
+    - name: Assign tmp folder to hosts services
+      set_fact:
+        host_tmpdirservices: "./configs_services/{{inventory_hostname}}"
+      changed_when: no
+      check_mode: no
+    - name: Empty tmp from previous run
+      file:
+        path: "{{host_tmpdirservices}}"
+        state: absent
+      changed_when: no
+      check_mode: no
+    - name: Create folder to store service configs
+      file:
+        path: "{{host_tmpdirservices}}"
+        state: directory
+      changed_when: no
+      check_mode: no
+    - name: Assign tmp folder for validiation
+      set_fact:
+        tmpdirservices_validate: "./validate_services"
+      changed_when: no
+      check_mode: no
+    - name: Empty tmp from previous run
+      file:
+        path: "{{tmpdirservices_validate}}"
+        state: absent
+      changed_when: no
+      check_mode: no
+    - name: Create folder to store service validiation
+      file:
+        path: "{{tmpdirservices_validate}}"
+        state: directory
+      changed_when: no
+      check_mode: no
+
+
+- name: Transform fabric data model
+  tags:
+    - config
+  hosts: localhost
+  gather_facts: no
+  tasks:
+  - include_vars:
+      file: ./fabric2node/fabric.yml
+  - name: Create per-node data model from fabric data model
+    template: src=./fabric2node/fabric-to-nodes.j2 dest=./fabric2node/nodes.yml
+
+- name: Generate infrastructure configs for IOS
+  tags:
+    - config
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+        file: ./fabric2node/nodes.yml
+  - name: Create interface config snippet for IOS
+    template: src=./ios/ios_interface.j2 dest=./configs/{{inventory_hostname}}/interface.cfg
+  - name: Create router config snippet for IOS
+    template: src=./ios/ios_router.j2 dest=./configs/{{inventory_hostname}}/router.cfg
+  - name: Create L3 service base snippet for IOS
+    template: src=./ios/ios_sbase.j2 dest=./configs/{{inventory_hostname}}/sbase.cfg
+  - name: Create SNMP config snippet for IOS
+    template: src=./ios/ios_snmp.j2 dest=./configs/{{inventory_hostname}}/snmp.cfg
+  - name: Build General config snippet for IOS
+    template: src=./ios/ios_general.j2 dest=./configs/{{inventory_hostname}}/general.cfg
+
+- name: Assemble infrastructure config for IOS
+  tags:
+    - config
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Assemble all config snippets
+    assemble:
+      src: "{{host_tmpdir}}/"
+      dest: "{{host_tmpdir}}/assembled.cfg"
+    changed_when: no
+    check_mode: no
+
+- name: Generate service configs for IOS
+  tags:
+    - config
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+         file: ./services/services.yml
+  - name: Create services from service data model
+    template: src=./ios/ios_services.j2 dest=./configs_services/{{ inventory_hostname }}/services.cfg
+
+
+- name: Generate pre deploy service check for IOS
+  tags:
+    - config
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+         file: ./services/services.yml
+  - name: Create pre deploy service check from service data model
+    template: src=./ios/ios_pre_deploy_services.j2 dest=./validate_services/{{ inventory_hostname }}_pre_deploy_services.yml
+
+- name: Generate post deploy service check for IOS cleanup
+  tags:
+    - config
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+         file: ./services/services.yml
+  - name: Create post deploy service check from service data model
+    template: src=./ios/ios_post_deploy_services.j2 dest=./validate_services/{{ inventory_hostname }}_post_vrf_check.yml
+
+
+- name: Generate service validiation for IOS
+  tags:
+    - config
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+         file: ./services/services.yml
+  - name: Create services validiation from service data model
+    template: src=./ios/ios_validate_services.j2 dest=./validate_services/{{ inventory_hostname }}_validate_services.yml
+
+- name: Deploy infrastructure configuration
+  hosts: ios
+  tags:
+    - deploy
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Deploy assembled infrastructure config for IOS using NAPALM
+      napalm_install_config:
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_ssh_user }}"
+        dev_os: "{{ os }}"
+        password: "{{ ansible_ssh_pass }}"
+        config_file: "./configs/{{ inventory_hostname }}/assembled.cfg"
+        commit_changes: "{{ not ansible_check_mode }}"
+        replace_config: false
+      register: output
+    - debug: var=output
+
+- name: Test infrastructure
+  hosts: ios
+  tags:
+    - test
+  gather_facts: false
+  connection: local
+  tasks:
+    - pause:
+        seconds: 2
+    - block:
+      - name: "validate deployment"
+        napalm_validate:
+          hostname: "{{ ansible_host }}"
+          username: "{{ ansible_ssh_user }}"
+          dev_os: "{{ os }}"
+          password: "{{ ansible_ssh_pass }}"
+          validation_file: "./validate/{{ inventory_hostname }}_validate_{{ item }}.yml"
+        register: report
+        tags: [print_action]
+        with_items: ["bgp"]
+
+- name: Check services before deployment
+  hosts: ios
+  tags:
+    - check
+  gather_facts: false
+  connection: local
+  tasks:
+    - include_vars:
+           file: ./validate_services/{{ inventory_hostname }}_pre_deploy_services.yml
+    - name: Check interfaces not provisioned
+      ios_command:
+        commands: show ip interface brief
+      register: result
+      failed_when: "('{{item}}' in result.stdout[0])"
+      with_items: "{{ prov_interfaces }}"
+
+- name: Deploy service configuration
+  hosts: ios
+  tags:
+    - deploy
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Deploy service config for IOS using NAPALM
+      napalm_install_config:
+        hostname: "{{ ansible_host }}"
+        username: "{{ ansible_ssh_user }}"
+        dev_os: "{{ os }}"
+        password: "{{ ansible_ssh_pass }}"
+        config_file: "./configs_services/{{ inventory_hostname }}/services.cfg"
+        commit_changes: "{{ not ansible_check_mode }}"
+        replace_config: false
+      register: output
+    - debug: var=output
+
+- name: Test services after deployment
+  hosts: ios
+  tags:
+    - deploy
+  gather_facts: false
+  connection: local
+  tasks:
+    - pause:
+        seconds: 2
+    - block:
+      - name: "validate deployment"
+        napalm_validate:
+          hostname: "{{ ansible_host }}"
+          username: "{{ ansible_ssh_user }}"
+          dev_os: "{{ os }}"
+          password: "{{ ansible_ssh_pass }}"
+          validation_file: "./validate_services/{{ inventory_hostname }}_validate_services.yml"
+        register: report
+        tags: [print_action]
+
+- name: Report service discrepancies
+  hosts: ios
+  tags:
+    - report
+  gather_facts: false
+  connection: local
+  tasks:
+    - file: path=./report/{{ inventory_hostname }}_vrf_report.yml state=absent
+    - file: path=./report/{{ inventory_hostname }}_vrf_report.yml state=touch
+    - include_vars:
+            file: ./validate_services/{{ inventory_hostname }}_post_vrf_check.yml
+    - lineinfile:
+        dest: ./report/{{ inventory_hostname }}_vrf_report.yml
+        line: '{{ item }}'
+      with_items:
+        - '---'
+        - 'vrf_obsolete:'
+    - name: Check and report VRF discrepancies
+      ios_command:
+        commands: show ip vrf detail | inc RD
+      register: result
+    - set_fact:
+        vrf: |
+          {{result.stdout_lines[0] |
+            map('regex_findall','^VRF\s([0-9]+)') |
+            map('join') | list }}
+    - lineinfile:
+        dest: ./report/{{ inventory_hostname }}_vrf_report.yml
+        line: "  - {{ item }}"
+      with_items: "{{ vrf }}"
+      when: "not ('{{ item }}' in '{{ prov_vrf }}')"
+
+- name: Cleanup VRF services
+  hosts: ios
+  tags:
+    - cleanup
+  gather_facts: false
+  connection: local
+  tasks:
+    - include_vars:
+            file: ./report/{{ inventory_hostname }}_vrf_report.yml
+    - name: Delete obsolete VRF services
+      ios_config:
+        lines:
+          - no ip vrf {{ item }}
+      with_items: "{{ vrf_obsolete }}"
+      when: ({{ vrf_obsolete }})

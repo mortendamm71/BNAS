@@ -13,7 +13,7 @@ L2VPN:
 L3VPN:
   - { left: R0, left_transport: 10.0.0.10, left_port: GigabitEthernet3, left_tag: 2001, neighbor_left: 172.16.17.0,
     right: R1, right_transport: 10.0.0.11, right_port: GigabitEthernet3, right_tag: 2001, neighbor_right: 172.16.17.4,
-    customer_id: 201, service_id: 2001, neighbor_asn: 65535, name: Silverpartner1 }
+    customer_id: 201, service_id: 2001, neighbor_asn: 65535, name: Silverpartner1, state: alive }
   - { left: R0, left_transport: 10.0.0.10, left_port: GigabitEthernet3, left_tag: 2002, neighbor_left: 172.16.17.8,
     right: R1, right_transport: 10.0.0.11, right_port: GigabitEthernet3, right_tag: 2002, neighbor_right: 172.16.17.12,
-    customer_id: 202, service_id: 2002, neighbor_asn: 65535, name: Silverpartner2 }
+    customer_id: 202, service_id: 2002, neighbor_asn: 65535, name: Silverpartner2, state: alive }
