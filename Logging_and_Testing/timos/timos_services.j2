@@ -1,0 +1,46 @@
+{% set node = inventory_hostname %}
+{% macro service_config(port,cid,sid,name,mtu,tag,transport,sdpid) %}
+###
+exit all
+configure
+#--------------------------------------------------
+echo "Port Configuration"
+#--------------------------------------------------
+    port {{ port }}
+        description "Customer"
+        ethernet
+            mode access
+            encap-type dot1q
+            mtu 1800
+        exit
+        no shutdown
+    exit
+#--------------------------------------------------
+    echo "Service Configuration"
+#--------------------------------------------------
+    service
+        customer {{ cid }} create
+        exit
+        epipe {{ sid }} customer {{ cid }} create
+            description "{{ name }}"
+            service-mtu {{ mtu }}
+            sap {{ port }}:{{ tag }} create
+            exit
+            spoke-sdp {{ sdpid }}:{{ sid }} create
+                no shutdown
+            exit
+            no shutdown
+        exit
+###
+{% endmacro %}
+
+{%  for value in L2VPN %}
+{%     if value.left == node %}
+{%        set sdpnr = value.right_transport | regex_replace('\d*\.\d*\.\d*\.','10') %}
+{{        service_config(value.left_port,value.customer_id,value.service_id,value.name,value.service_mtu,value.left_tag,value.right_transport,sdpnr) }}
+{%     endif %}
+{%     if value.right == node %}
+{%        set sdpnr = value.left_transport | regex_replace('\d*\.\d*\.\d*\.','10') %}
+{{        service_config(value.left_port,value.customer_id,value.service_id,value.name,value.service_mtu,value.right_tag,value.left_transport,sdpnr) }}
+{%     endif %}
+{%  endfor %}

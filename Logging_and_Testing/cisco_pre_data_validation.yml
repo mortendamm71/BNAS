@@ -1,0 +1,32 @@
+---
+- name: Create Infrastructure interface list from per node model input
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+        file: ./fabric2node/nodes.yml
+  - name: Create a list used for Data input validation
+    template: src=./ios/ios_interface_pre_deploy.j2 dest=./pre_deploy/{{inventory_hostname}}_interface.yml
+
+- name: Validate input data - Check if interfaces are already used on target
+  hosts: ios
+  connection: local
+  gather_facts: no
+  tasks:
+  - include_vars:
+        file: ./pre_deploy/{{inventory_hostname}}_interface.yml
+  - name: Get interfaces on target
+    napalm_get_facts:
+      hostname: "{{ ansible_host }}"
+      username: "{{ ansible_ssh_user }}"
+      dev_os: "{{ os }}"
+      password: "{{ ansible_ssh_pass }}"
+      filter: 'interfaces'
+    register: output
+  - debug: var=output
+  - assert:
+      that:
+        - item.key != "{{ link }}"
+      msg: "Interface already provisioned"
+    with_dict: "{{ napalm_interfaces }}"

@@ -1,0 +1,34 @@
+{% set node = nodes[inventory_hostname] %}
+{% if node.system is defined %}
+interface Loopback0
+ ip address {{ node.system }} 255.255.255.255
+!
+{% endif %}
+{% if node.management is defined %}
+interface {{ node.management_port }}
+ description "Management"
+ ip vrf forwarding management
+ ip address {{ node.management }} 255.255.255.0
+ negotiation auto
+!
+{% endif %}
+{% if node.links is defined %}
+{%    for intf,data in node.links|dictsort %}
+{%        set mainintf = intf | regex_replace('\.\d*','') %}
+interface {{ mainintf }}
+ no ip address
+ negotiation auto
+!
+interface {{ intf }}
+ description "To-{{ data.remote }}"
+ encapsulation dot1Q {{ data.dot1q }}
+ ip address {{ data.ip }} 255.255.255.252
+ ip ospf message-digest-key 1 md5 {{ common.message_digest_key }}
+ ip ospf network point-to-point
+{%        if data.cost is defined %}
+ ip ospf cost {{data.cost}}
+{%        endif %}
+ mpls ip
+!
+{%    endfor %}
+{% endif %}

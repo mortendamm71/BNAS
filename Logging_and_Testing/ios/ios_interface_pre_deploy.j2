@@ -1,0 +1,8 @@
+{% set node = nodes[inventory_hostname] %}
+---
+{% if node.links is defined %}
+{%    for intf,data in node.links|dictsort %}
+{%        set mainintf = intf | regex_replace('\.\d*','') %}
+link: {{ intf }}
+{%    endfor %}
+{% endif %}

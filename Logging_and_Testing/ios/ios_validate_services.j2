@@ -1,0 +1,22 @@
+{% set node = inventory_hostname %}
+---
+- get_facts:
+    hostname: {{ node }}
+
+- get_interfaces_ip:
+{% macro validate_service_config(port,tag,ip1) %}
+    {{ port }}.{{ tag }}:
+      ipv4:
+        {{ ip1 }}:
+          prefix_length: 30
+{% endmacro %}
+{%  for value in L3VPN %}
+{%     if value.left == node and value.state == 'alive' %}
+{%        set ipi = value.neighbor_left | ipsubnet(30) | ipaddr('1') | ipaddr('address')%}
+{{        validate_service_config(value.left_port,value.left_tag,ipi) }}
+{%     endif %}
+{%     if value.right == node and value.state == 'alive' %}
+{%        set ipi = value.neighbor_right | ipsubnet(30) | ipaddr('1') | ipaddr('address')%}
+{{        validate_service_config(value.right_port,value.right_tag,ipi) }}
+{%     endif %}
+{%  endfor %}

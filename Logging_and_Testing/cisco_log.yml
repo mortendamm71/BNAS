@@ -1,0 +1,18 @@
+---
+- name: Check services before deployment
+  hosts: ios
+  tags:
+    - check
+  gather_facts: false
+  connection: local
+  tasks:
+    - include_vars:
+           file: ./validate_services/{{ inventory_hostname }}_pre_deploy_services.yml
+    - name: Check interfaces not provisioned
+      ios_command:
+        commands: show ip interface brief
+      register: result
+    - copy:
+        content: "{{ result.stdout[0] }}"
+        dest: ./{{ debug_output }}/{{ inventory_hostname }}_sh_ip_int_brie.dump
+      when: debug_output is defined

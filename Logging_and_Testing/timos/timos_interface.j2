@@ -1,0 +1,56 @@
+{% set node = nodes[inventory_hostname] %}
+{% if node.management_port is defined %}
+exit all
+configure
+#--------------------------------------------------
+echo "Port Configuration"
+#--------------------------------------------------
+    port {{ node.management_port }}
+        description "Management"
+        ethernet
+        exit
+        no shutdown
+    exit
+{% endif %}
+{% if node.links is defined %}
+{%    for intf,data in node.links|dictsort %}
+{%        set realport = intf | regex_replace('\.\d*','') %}
+{%        if loop.index <= 1 %}
+    port {{ realport }}
+        description "Infrastructure"
+        ethernet
+            encap-type dot1q
+            mtu 1518
+        exit
+        no shutdown
+    exit
+{%        endif %}
+{%    endfor %}
+{% endif %}
+#--------------------------------------------------
+echo "Router (Network Side) Configuration"
+#--------------------------------------------------
+    router
+{% if node.management is defined %}
+        interface "management"
+            address {{ node.management }}/24
+            port {{ node.management_port }}
+            no shutdown
+        exit
+{% endif %}
+{% if node.system is defined %}
+        interface "system"
+            address {{ node.system }}/32
+            no shutdown
+        exit
+{% endif %}
+{% if node.links is defined %}
+{%    for intf,data in node.links|dictsort %}
+{%        set port = intf | regex_replace('\.\d*','') %}
+      interface "To-{{ data.remote }}"
+          address {{ data.ip }}/30
+          port {{ port }}:{{ data.dot1q }}
+          no shutdown
+      exit
+{%    endfor %}
+{% endif %}

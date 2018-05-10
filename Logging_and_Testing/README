@@ -1,0 +1,11 @@
+####Description of playbooks####
+
+##cisco_log.yml##
+Log conditionally
+Command line
+ansible-playbook cisco_log_test.yml --ask-vault-pass -e debug_output=d_out
+
+
+##cisco_pre_data_validation.yml##
+Create a dictionary with infrastructure link
+Check if the link already exist on the target using assert
